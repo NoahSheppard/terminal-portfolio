@@ -28,78 +28,40 @@ const ANSI = {
     yellow: "\x1b[33m", 
 };
 
-const DOOM_SCREEN_WIDTH = 320 * 2;
-const DOOM_SCREEN_HEIGHT = 200 * 2;
-const DOOM_BLOCK = "▀";
-const DOOM_PAD_PX = 8;
+let fsRoot = null;
+let manifestPromise = null;
 
-const FS = {
-    type: "dir",
-    children: {
-        home: {
-            type: "dir",
-            children: {
-                guest: {
-                    type: "dir",
-                    children: {
-                        "about.txt": {
-                            type: "file",
-                            content: "Hello - I am Noah, a 17-year-old software developer"
-                        },
-                        "skills.txt": {
-                            type: "file",
-                            content: "- JavaScript\n- Node.js\n- Web UI\n"
-                        },
-                        projects: {
-                            type: "dir",
-                            children: {
-                                "terminal-portfolio.txt": {
-                                    type: "file",
-                                    content: "A terminal-style personal site built with xterm.js."
-                                },
-                                "demo-cli.txt": {
-                                    type: "file",
-                                    content: "A playful CLI experience with fake commands and output."
-                                }
-                            }
-                        }
-                    }
-                }
+function isDirNode(node) {
+    return Boolean(node && (node.type === "dir" || node.type === "folder" || node.type === "rootfs"));
+}
+
+function toFsUrl(pathParts) {
+    const parts = Array.isArray(pathParts) ? pathParts : [];
+    const encoded = parts.map((part) => encodeURIComponent(String(part)));
+    return "/fs/" + encoded.join("/");
+}
+
+function loadManifest() {
+    if (manifestPromise) return manifestPromise;
+
+    manifestPromise = fetch("/fs/manifest.json")
+        .then((response) => response.json())
+        .then((root) => {
+            if (!root) {
+                term.writeln("manifest: empty");
+                return null;
             }
-        },
-        bin: {
-            type: "dir",
-            children: {}
-        }
-    }
-};
+            fsRoot = root;
+            return root;
+        })
+        .catch((error) => {
+            console.error("Error: ", error);
+            term.writeln("manifest: failed to load");
+            return null;
+        });
 
-const neofetchLines = [
-
-    { text: `${ANSI.red}                   >[}}}####}}}[<:              guest${ANSI.reset}@${ANSI.red}noahsh.dev`, delay: 20}, 
-    { text: `${ANSI.red}           ]####################[               ----------------`, delay: 20},
-    { text: `${ANSI.red}        >}#####}####}##}####}#####})            OS${ANSI.reset}: NOS: Web Edition`, delay: 20},
-    { text: `${ANSI.red}      [####}#####}#######}####}######}          Kernel${ANSI.reset}: nosw1.21-prod `, delay: 20},
-    { text: `${ANSI.red}    =}###}###}#####}##}##}#####}###}#}          Uptime${ANSI.reset}: Forever and a day `, delay: 20},
-    { text: `${ANSI.red}   [###}#######}##})-+}####}#####}##]   :       Packages${ANSI.reset}: None   `, delay: 20},
-    { text: `${ANSI.red}  [#######}#####}}-   <######}####}>   *#}      Shell${ANSI.reset}: yes `, delay: 20},
-    { text: `${ANSI.red} >##}###}###}###}-   -##}######}#}    <###]     Theme${ANSI.reset}: Custom `, delay: 20},
-    { text: `${ANSI.red} #####}###}###}}     #####}####}*    }##}##:    Icons${ANSI.reset}: ASCII `, delay: 20},
-    { text: `${ANSI.red}<##}##}#######[     ##}#####}#}    >#######[    Terminal${ANSI.reset}: Web`, delay: 20},
-    { text: `${ANSI.red}}#######}##}#*      ##}##}##}    =}###}##}##    CPU${ANSI.reset}: WASM Virtual Core (2.5) @ 67MHz  `, delay: 20},
-    { text: `${ANSI.red}##}#}###}##}       +#######     }###}#######    GPU${ANSI.reset}: GT 1030 `, delay: 20},
-    { text: `${ANSI.red}}#####}##}}    }   -###}}:    }########}##}#    Memory${ANSI.reset}: 120KiB/640KiB    `, delay: 20},
-    { text: `${ANSI.red}<##}##}#}-   =}#}   }#]     }###}##}#######[    `, delay: 20},
-    { text: `${ANSI.red} }#####<    }####=        }#########}###}##:    ${ANSI.reset}${"\x1b[30m"}████${"\x1b[31m"}████${"\x1b[32m"}████${"\x1b[33m"}████${"\x1b[34m"}████${"\x1b[35m"}████${"\x1b[36m"}████${"\x1b[37m"}████${ANSI.reset}`, delay: 20},
-    { text: `${ANSI.red} >##}[    <##}####>    +}###}##}##}###}###)     ${ANSI.reset}${"\x1b[90m"}████${"\x1b[91m"}████${"\x1b[92m"}████${"\x1b[93m"}████${"\x1b[94m"}████${"\x1b[95m"}████${"\x1b[96m"}████${"\x1b[97m"}████${ANSI.reset}`, delay: 20},
-    { text: `${ANSI.red}  [}    -}#####}###}}}#######}###########}      `, delay: 20},
-    { text: `${ANSI.red}       }###}}##}#########}######}##}###}}       `, delay: 20},
-    { text: `${ANSI.red}     }###########}####}####}##}######}}*        `, delay: 20},
-    { text: `${ANSI.red}      ]}##}##}#####}##}##########}}##}          `, delay: 20},
-    { text: `${ANSI.red}        >}#####}}######}##}##}####})            `, delay: 20},
-    { text: `${ANSI.red}           <}#####}##}##}######}]               `, delay: 20},
-    { text: `${ANSI.red}               *[}}}}##}}}}}>                   `, delay: 20}
-]
+    return manifestPromise;
+}
 
 const bootLines = [
     { text: `${ANSI.grey}[  ${ANSI.green}OK  ${ANSI.grey}] ${ANSI.reset}BIOS 0.1`, delay: 80},
@@ -123,6 +85,7 @@ async function printLines(lines) {
 
 let cwd = [...HOME];
 let inputBuffer = "";
+let inputLocked = false;
 
 function promptPath() {
     const homePath = "/" + HOME.join("/");
@@ -139,6 +102,22 @@ function prompt() {
         `${ANSI.blue}${promptPath()}` +
         `${ANSI.reset}$ `
     );
+}
+
+function getCwd() {
+    return cwd;
+}
+
+function setCwd(next) {
+    cwd = next;
+}
+
+function setInputLock(locked) {
+    inputLocked = Boolean(locked);
+}
+
+function isInputLocked() {
+    return inputLocked;
 }
 
 function tokenize(line) {
@@ -190,20 +169,64 @@ function resolvePath(input) {
 }
 
 function getNode(pathParts) {
-    let node = FS;
+    if (!fsRoot) return null;
+    let node = fsRoot;
     for (const part of pathParts) {
-        if (!node || node.type !== "dir") return null;
-        node = node.children[part];
+        if (!node || !Array.isArray(node.children)) return null;
+        node = node.children.find((child) => child.name === part);
         if (!node) return null;
     }
     return node;
 }
 
+const commands = new Map();
+
+async function loadCommands() {
+    const importPromises = [];
+
+    const renderTree = (node) => {
+        if (!node || typeof node !== "object") return;
+
+        if (node.type === "binary") {
+            const name = node.name ? String(node.name) : "(unnamed)";
+            if (node.path) {
+                const importPromise = import(node.path)
+                    .then((mod) => {
+                        const command = mod && mod.default ? mod.default : mod;
+                        if (command && typeof command.run === "function") {
+                            commands.set(name, command);
+                            return;
+                        }
+                        term.writeln(`load: invalid command ${name}`);
+                    })
+                    .catch((error) => {
+                        console.error("Error: ", error);
+                        term.writeln(`load: failed to import ${name}`);
+                    });
+
+                importPromises.push(importPromise);
+            }
+        }
+
+        const children = Array.isArray(node.children) ? node.children : [];
+        for (const child of children) {
+            renderTree(child);
+        }
+    };
+
+    const root = await loadManifest();
+    if (!root) return;
+    renderTree(root);
+    await Promise.all(importPromises);
+}
+
 function listDir(node) {
-    if (node.type !== "dir") return [];
-    return Object.keys(node.children)
-        .sort()
-        .map((name) => node.children[name].type === "dir" ? `${name}/` : name);
+    if (!isDirNode(node)) return [];
+    const children = Array.isArray(node.children) ? node.children : [];
+    return children
+        .slice()
+        .sort((a, b) => String(a.name).localeCompare(String(b.name)))
+        .map((child) => isDirNode(child) ? `${child.name}/` : child.name);
 }
 
 function writeLines(text) {
@@ -211,320 +234,51 @@ function writeLines(text) {
     for (const line of lines) term.writeln(line);
 }
 
-const doomState = {
-    running: false,
-    resolve: null,
-    animationId: null,
-    exports: null,
-    memory: null,
-    cleanup: null
+const commandContext = {
+    term,
+    writeLines,
+    resolvePath,
+    getNode,
+    listDir,
+    printLines,
+    ANSI,
+    HOME,
+    USER,
+    HOST,
+    getCwd,
+    setCwd,
+    setInputLock,
+    isInputLocked,
+    getCommandNames: () => Array.from(commands.keys()).sort(),
+    isDirNode,
+    toFsUrl
 };
 
-function rgbToXterm256(r, g, b) {
-    if (r === g && g === b) {
-        if (r < 8) return 16;
-        if (r > 248) return 231;
-        return 232 + Math.round((r - 8) / 10);
-    }
-
-    const rIdx = Math.round((r / 255) * 5);
-    const gIdx = Math.round((g / 255) * 5);
-    const bIdx = Math.round((b / 255) * 5);
-    return 16 + (36 * rIdx) + (6 * gIdx) + bIdx;
-}
-
-function doomKeyCode(keyCode) {
-    switch (keyCode) {
-        case 8:
-            return 127; // KEY_BACKSPACE
-        case 17:
-            return (0x80 + 0x1d); // KEY_RCTRL
-        case 18:
-            return (0x80 + 0x38); // KEY_RALT
-        case 37:
-            return 0xac; // KEY_LEFTARROW
-        case 38:
-            return 0xad; // KEY_UPARROW
-        case 39:
-            return 0xae; // KEY_RIGHTARROW
-        case 40:
-            return 0xaf; // KEY_DOWNARROW
-        default:
-            if (keyCode >= 65 && keyCode <= 90) {
-                return keyCode + 32; // ASCII to lower case
-            }
-            if (keyCode >= 112 && keyCode <= 123) {
-                return keyCode + 75; // KEY_F1
-            }
-            return keyCode;
-    }
-}
-
-function getDoomPadCells() {
-    const dims = term._core && term._core._renderService
-        ? term._core._renderService.dimensions
-        : null;
-    const cellWidth = dims && dims.actualCellWidth ? dims.actualCellWidth : null;
-    const cellHeight = dims && dims.actualCellHeight ? dims.actualCellHeight : null;
-    if (!cellWidth || !cellHeight) {
-        return { cols: 1, rows: 1 };
-    }
-
-    return {
-        cols: Math.max(1, Math.ceil(DOOM_PAD_PX / cellWidth)),
-        rows: Math.max(1, Math.ceil(DOOM_PAD_PX / cellHeight))
-    };
-}
-
-function renderDoomFrame(ptr) {
-    if (!doomState.running || !doomState.memory) return;
-
-    const pad = getDoomPadCells();
-    const cols = Math.max(1, term.cols - 6);
-    const rows = Math.max(1, term.rows - 2);
-    const src = new Uint8ClampedArray(
-        doomState.memory.buffer,
-        ptr,
-        DOOM_SCREEN_WIDTH * DOOM_SCREEN_HEIGHT * 4
-    );
-
-    const xScale = DOOM_SCREEN_WIDTH / cols;
-    const yScale = DOOM_SCREEN_HEIGHT / (rows * 2);
-    const rowStride = DOOM_SCREEN_WIDTH * 4;
-
-    let output = "\x1b[H\x1b[0m";
-    let lastFg = -1;
-    let lastBg = -1;
-
-    for (let y = 0; y < rows; y += 1) {
-        lastFg = -1;
-        lastBg = -1;
-
-        const topY = Math.floor((y * 2) * yScale);
-        const bottomY = Math.floor((y * 2 + 1) * yScale);
-        const topRow = topY * rowStride;
-        const bottomRow = bottomY * rowStride;
-
-        for (let x = 0; x < cols; x += 1) {
-            const srcX = Math.floor(x * xScale);
-            const topIdx = topRow + srcX * 4;
-            const bottomIdx = bottomRow + srcX * 4;
-            const fg = rgbToXterm256(src[topIdx], src[topIdx + 1], src[topIdx + 2]);
-            const bg = rgbToXterm256(src[bottomIdx], src[bottomIdx + 1], src[bottomIdx + 2]);
-
-            if (fg !== lastFg) {
-                output += `\x1b[38;5;${fg}m`;
-                lastFg = fg;
-            }
-            if (bg !== lastBg) {
-                output += `\x1b[48;5;${bg}m`;
-                lastBg = bg;
-            }
-
-            output += DOOM_BLOCK;
-        }
-
-        output += "\x1b[0m\x1b[K";
-        if (y < rows - 1 || pad.rows > 0) output += "\r\n";
-    }
-
-    for (let padRow = 0; padRow < pad.rows; padRow += 1) {
-        output += "\x1b[0m\x1b[K";
-        if (padRow < pad.rows - 1) output += "\r\n";
-    }
-
-    term.write(output);
-}
-
-function stopDoom() {
-    if (!doomState.running) return;
-
-    doomState.running = false;
-    if (doomState.animationId) cancelAnimationFrame(doomState.animationId);
-    if (doomState.cleanup) doomState.cleanup();
-
-    doomState.animationId = null;
-    doomState.exports = null;
-    doomState.memory = null;
-
-    term.write("\x1b[0m\x1b[?25h\x1b[2J\x1b[H");
-
-    if (doomState.resolve) {
-        const resolve = doomState.resolve;
-        doomState.resolve = null;
-        resolve();
-    }
-}
-
-function startDoom() {
-    if (doomState.running) return Promise.resolve();
-
-    doomState.running = true;
-    term.write("\x1b[2J\x1b[H\x1b[?25l");
-    term.focus();
-
-    const promise = new Promise((resolve) => {
-        doomState.resolve = resolve;
-    });
-
-    const onKeyDown = (event) => {
-        if (!doomState.running) return;
-        if (event.ctrlKey && (event.key === "c" || event.key === "C")) {
-            event.preventDefault();
-            stopDoom();
-            return;
-        }
-        if (!doomState.exports) return;
-        doomState.exports.add_browser_event(0 /*KeyDown*/, doomKeyCode(event.keyCode));
-        event.preventDefault();
-    };
-
-    const onKeyUp = (event) => {
-        if (!doomState.running || !doomState.exports) return;
-        doomState.exports.add_browser_event(1 /*KeyUp*/, doomKeyCode(event.keyCode));
-        event.preventDefault();
-    };
-
-    document.addEventListener("keydown", onKeyDown, true);
-    document.addEventListener("keyup", onKeyUp, true);
-    doomState.cleanup = () => {
-        document.removeEventListener("keydown", onKeyDown, true);
-        document.removeEventListener("keyup", onKeyUp, true);
-    };
-
-    doomState.memory = new WebAssembly.Memory({ initial: 108 });
-
-    const importObject = {
-        js: {
-            js_console_log() {},
-            js_stdout() {},
-            js_stderr() {},
-            js_milliseconds_since_start: () => performance.now(),
-            js_draw_screen: renderDoomFrame
-        },
-        env: {
-            memory: doomState.memory
-        }
-    };
-
-    WebAssembly.instantiateStreaming(fetch("/doom/doom.wasm"), importObject)
-        .then((obj) => {
-            if (!doomState.running) return;
-            doomState.exports = obj.instance.exports;
-            doomState.exports.main();
-
-            const step = () => {
-                if (!doomState.running || !doomState.exports) return;
-                doomState.exports.doom_loop_step();
-                doomState.animationId = window.requestAnimationFrame(step);
-            };
-
-            doomState.animationId = window.requestAnimationFrame(step);
-        })
-        .catch((err) => {
-            term.writeln(`doom: ${err.message}`);
-            stopDoom();
-        });
-
-    return promise;
-}
-
-const COMMANDS = {
-    help() {
-        writeLines(
-            "Available commands:\n" +
-            "  help, ls, cd, pwd, cat, neofetch, echo, whoami, date, clear\n" +
-            "Try: ls, cd projects, cat about.txt"
-        );
-    },
-    ls(args) {
-        const target = args[0] ? resolvePath(args[0]) : cwd;
-        const node = getNode(target);
-        if (!node) {
-            term.writeln(`ls: cannot access '${args[0]}': No such file or directory`);
-            return;
-        }
-        if (node.type === "file") {
-            term.writeln(args[0]);
-            return;
-        }
-        const items = listDir(node);
-        term.writeln(items.join("  "));
-    },
-    cd(args) {
-        const target = args[0] ? resolvePath(args[0]) : HOME;
-        const node = getNode(target);
-        if (!node) {
-            term.writeln(`cd: ${args[0]}: No such file or directory`);
-            return;
-        }
-        if (node.type !== "dir") {
-            term.writeln(`cd: ${args[0]}: Not a directory`);
-            return;
-        }
-        cwd = target;
-    },
-    pwd() {
-        term.writeln("/" + cwd.join("/"));
-    },
-    cat(args) {
-        if (!args[0]) {
-            term.writeln("cat: missing file operand");
-            return;
-        }
-        const target = resolvePath(args[0]);
-        const node = getNode(target);
-        if (!node) {
-            term.writeln(`cat: ${args[0]}: No such file or directory`);
-            return;
-        }
-        if (node.type !== "file") {
-            term.writeln(`cat: ${args[0]}: Is a directory`);
-            return;
-        }
-        writeLines(node.content);
-    },
-    neofetch(args) {
-        return printLines(neofetchLines);
-    },
-    echo(args) {
-        term.writeln(args.join(" "));
-    },
-    whoami() {
-        term.writeln(USER);
-    },
-    date() {
-        term.writeln(new Date().toString());
-    },
-    clear() {
-        term.clear();
-    },
-    doom() {
-        return startDoom();
-    }
-};
-
-function runCommand(line) {
+function runCommandLine(line) {
     const trimmed = line.trim();
     if (!trimmed) return;
     const tokens = tokenize(trimmed);
     const cmd = tokens[0];
     const args = tokens.slice(1);
 
-    const handler = COMMANDS[cmd];
-    if (!handler) {
-        term.writeln(`${cmd}: command not found`);
+    return runCommandByName(cmd, args);
+}
+
+function runCommandByName(name, args) {
+    const cmd = commands.get(name);
+    if (!cmd) {
+        term.writeln(`${name}: command not found`);
         return;
     }
-    return handler(args);
+    return cmd.run(args, commandContext);
 }
 
 term.onData((data) => {
-    if (doomState.running) return;
+    if (inputLocked) return;
     for (const ch of data) {
         if (ch === "\r") {
             term.write("\r\n");
-            const result = runCommand(inputBuffer);
+            const result = runCommandLine(inputBuffer);
             inputBuffer = "";
             if (result && typeof result.then === "function") {
                 result.then(() => prompt());
@@ -551,34 +305,8 @@ term.onData((data) => {
     }
 });
 
-printLines(bootLines).then(() => {
-    prompt();
-});
-
-const overlay = document.getElementById("window-overlay");
-const frame = document.getElementById("window-frame");
-const titleEl = document.getElementById("window-title");
-const closeBtn = document.getElementById("window-close");
-
-function openWindow(url, title) {
-    frame.src = url;
-    titleEl.textContent = title || url;
-    overlay.classList.add("is-open");
-    overlay.setAttribute("aria-hidden", "false");
+async function init() {
+    await loadCommands();
+    printLines(bootLines).then(() => prompt());
 }
-
-function closeWindow() {
-    overlay.classList.remove("is-open");
-    overlay.setAttribute("aria-hidden", "true");
-    frame.src = "about:blank";
-}
-
-if (overlay && frame && titleEl && closeBtn) {
-    closeBtn.addEventListener("click", closeWindow);
-    overlay.addEventListener("click", (e) => {
-        if (e.target === overlay) closeWindow();
-    });
-    document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") closeWindow();
-    });
-}
+init();

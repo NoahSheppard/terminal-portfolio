@@ -1,0 +1,1 @@
+A playful CLI experience with fake commands and output.

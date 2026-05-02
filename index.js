@@ -22,6 +22,7 @@ function contentType(filePath) {
 		case '.svg': return 'image/svg+xml';
 		case '.json': return 'application/json; charset=utf-8';
 		case '.wasm': return 'application/wasm';
+		case '.xml': return 'application/xml; charset=utf-8';
 		default: return 'application/octet-stream';
 	}
 }

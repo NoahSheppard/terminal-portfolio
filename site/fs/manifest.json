@@ -1,0 +1,46 @@
+{
+    "name": "root",
+    "type": "rootfs",
+    "children": [
+        {   
+            "name": "home",
+            "type": "folder",
+            "children": [
+                {
+                    "name": "guest",
+                    "type": "folder",
+                    "children": [
+                        { 
+                            "name": "projects", 
+                            "type": "folder",
+                            "children": [
+                                { "name": "terminal-portfolio.txt", "type": "file" },
+                                { "name": "demo-cli.txt", "type": "file" }
+                            ]
+                        },
+                        { "name": "about.txt", "type": "file" },
+                        { "name": "skills.txt", "type": "file" }
+                    ]
+                }
+            ]
+        },
+        {   
+            "name": "bin",
+            "type": "folder",
+            "children": [
+                { "name": "help", "path": "/fs/bin/help.js", "type": "binary" },
+                { "name": "ls", "path": "/fs/bin/ls.js", "type": "binary" },
+                { "name": "cd", "path": "/fs/bin/cd.js", "type": "binary" },
+                { "name": "pwd", "path": "/fs/bin/pwd.js", "type": "binary" },
+                { "name": "cat", "path": "/fs/bin/cat.js", "type": "binary" },
+                { "name": "neofetch", "path": "/fs/bin/neofetch.js", "type": "binary" },
+                { "name": "echo", "path": "/fs/bin/echo.js", "type": "binary" },
+                { "name": "whoami", "path": "/fs/bin/whoami.js", "type": "binary" },
+                { "name": "date", "path": "/fs/bin/date.js", "type": "binary" },
+                { "name": "clear", "path": "/fs/bin/clear.js", "type": "binary" },
+                { "name": "doom", "path": "/fs/bin/doom.js", "type": "binary" },
+                { "name": "lm", "path": "/fs/bin/lm.js", "type": "binary" }
+            ]
+        }
+    ]
+}
