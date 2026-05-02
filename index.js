@@ -7,6 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
+const HOST = process.env.HOST || '0.0.0.0';
 const PUBLIC_DIR = path.join(__dirname, 'site');
 
 function contentType(filePath) {
@@ -28,7 +29,7 @@ function contentType(filePath) {
 const server = http.createServer((req, res) => {
 	try {
 		const reqUrl = req.url || '/';
-		const baseUrl = `http://192.168.5.235:${PORT}`;
+		const baseUrl = `http://${HOST}:${PORT}`;
 		const parsed = new URL(reqUrl, baseUrl);
 		let pathname = decodeURIComponent(parsed.pathname);
 
@@ -81,9 +82,9 @@ function streamFile(filePath, res) {
 	stream.pipe(res);
 }
 
-server.listen(PORT, () => {
+server.listen(PORT, HOST, () => {
 	// Minimal console log
-	console.log(`Listening on http://localhost:${PORT}`);
+	console.log(`Listening on http://${HOST}:${PORT}`);
 });
 
 export {};
