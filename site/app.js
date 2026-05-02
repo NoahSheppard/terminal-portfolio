@@ -54,7 +54,7 @@ const FS = {
                         projects: {
                             type: "dir",
                             children: {
-                                "bash-portfolio.txt": {
+                                "terminal-portfolio.txt": {
                                     type: "file",
                                     content: "A terminal-style personal site built with xterm.js."
                                 },
