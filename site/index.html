@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Terminal Portfolio</title>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@6.0.0/css/xterm.css">
+        <script defer src="https://cdn.jsdelivr.net/npm/@xterm/xterm@6.0.0/lib/xterm.js"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.11.0/lib/addon-fit.js"></script>
+        <link rel="stylesheet" href="/style.css">
+    </head>
+    <body>
+        <div id="terminal"></div>
+        <div id="window-overlay" class="window-overlay" aria-hidden="true">
+            <div class="window" role="dialog" aria-modal="true" aria-labelledby="window-title">
+                <div class="window-bar">
+                    <span id="window-title">Preview</span>
+                    <button id="window-close" class="window-close" aria-label="Close">x</button>
+                </div>
+                <iframe
+                    id="window-frame"
+                    title="Embedded content"
+                    sandbox="allow-scripts allow-same-origin allow-forms"
+                    referrerpolicy="no-referrer"
+                ></iframe>
+            </div>
+        </div>
+        <script defer src="/app.js"></script>
+    </body>
+</html>

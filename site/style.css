@@ -1,0 +1,82 @@
+:root {
+    --bg-1: #0b0d10;
+    --bg-2: #131a22;
+    --panel: rgba(10, 14, 18, 0.85);
+    --border: #1e2a36;
+    --glow: rgba(89, 246, 255, 0.12);
+    --text: #c8d0d8;
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+    margin: 0;
+    color: var(--text);
+    font-family: "Space Mono", "IBM Plex Mono", "Menlo", "Consolas", monospace;
+    background: radial-gradient(1200px 800px at 20% 10%, #1b2732 0%, var(--bg-1) 55%);
+    display: flex;
+}
+
+#terminal {
+    width: 100vw;
+    height: 100vh;
+    padding: 24px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.02), 0 30px 80px var(--glow);
+}
+
+#terminal .xterm { height: 100%; }
+
+.window-overlay {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: rgba(6, 8, 10, 0.7);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 160ms ease;
+}
+
+.window-overlay.is-open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.window {
+    width: min(960px, 92vw);
+    height: min(640px, 80vh);
+    background: #0f151c;
+    border: 1px solid var(--border);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
+    display: flex;
+    flex-direction: column;
+}
+
+.window-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: #121a22;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+}
+
+.window-close {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 2px 8px;
+    cursor: pointer;
+}
+
+#window-frame {
+    flex: 1;
+    width: 100%;
+    border: 0;
+    background: #000;
+}

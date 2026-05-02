@@ -1,0 +1,40 @@
+<html><head>
+    <meta charset="utf-8">
+    <title>DooM</title>
+
+    <style>
+      #output {
+        border: 3px groove aquamarine;
+        background-color: bisque;
+        width: 550px;
+        height: 400px;
+        font-family: monospace, serif;
+        font-size: 10px;
+        overflow-y: scroll;
+      }
+      #output span.log {
+        color:darkslateblue;
+      }
+      #output span.stdout {
+        color: black;
+      }
+      #output span.stderr {
+        font-weight: bold;
+        color:brown;
+      }
+
+      .container {
+        display: flex;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <canvas id="screen" width="640" height="400" tabindex="0">This is where the DooM screen should render.</canvas>
+      <div id="output"></div>
+    </div>
+
+    <script src="/doom/doom.js" defer=""></script>
+  </body>
+</html>
