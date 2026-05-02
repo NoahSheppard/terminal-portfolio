@@ -31,8 +31,7 @@ const ANSI = {
 const DOOM_SCREEN_WIDTH = 320 * 2;
 const DOOM_SCREEN_HEIGHT = 200 * 2;
 const DOOM_BLOCK = "▀";
-const DOOM_PAD_ROWS = 1;
-const DOOM_PAD_COLS = 2;
+const DOOM_PAD_PX = 8;
 
 const FS = {
     type: "dir",
@@ -261,11 +260,28 @@ function doomKeyCode(keyCode) {
     }
 }
 
+function getDoomPadCells() {
+    const dims = term._core && term._core._renderService
+        ? term._core._renderService.dimensions
+        : null;
+    const cellWidth = dims && dims.actualCellWidth ? dims.actualCellWidth : null;
+    const cellHeight = dims && dims.actualCellHeight ? dims.actualCellHeight : null;
+    if (!cellWidth || !cellHeight) {
+        return { cols: 1, rows: 1 };
+    }
+
+    return {
+        cols: Math.max(1, Math.ceil(DOOM_PAD_PX / cellWidth)),
+        rows: Math.max(1, Math.ceil(DOOM_PAD_PX / cellHeight))
+    };
+}
+
 function renderDoomFrame(ptr) {
     if (!doomState.running || !doomState.memory) return;
 
-    const cols = Math.max(1, term.cols - DOOM_PAD_COLS * 2);
-    const rows = Math.max(1, term.rows - DOOM_PAD_ROWS * 2);
+    const pad = getDoomPadCells();
+    const cols = Math.max(1, term.cols - 6);
+    const rows = Math.max(1, term.rows - 2);
     const src = new Uint8ClampedArray(
         doomState.memory.buffer,
         ptr,
@@ -276,17 +292,11 @@ function renderDoomFrame(ptr) {
     const yScale = DOOM_SCREEN_HEIGHT / (rows * 2);
     const rowStride = DOOM_SCREEN_WIDTH * 4;
 
-    const fullLine = " ".repeat(Math.max(1, term.cols));
     let output = "\x1b[H\x1b[0m";
     let lastFg = -1;
     let lastBg = -1;
 
-    for (let pad = 0; pad < DOOM_PAD_ROWS; pad += 1) {
-        output += fullLine + "\r\n";
-    }
-
     for (let y = 0; y < rows; y += 1) {
-        output += "\x1b[0m" + " ".repeat(DOOM_PAD_COLS);
         lastFg = -1;
         lastBg = -1;
 
@@ -314,12 +324,13 @@ function renderDoomFrame(ptr) {
             output += DOOM_BLOCK;
         }
 
-        output += "\x1b[0m" + " ".repeat(DOOM_PAD_COLS);
-        if (y < rows - 1) output += "\r\n";
+        output += "\x1b[0m\x1b[K";
+        if (y < rows - 1 || pad.rows > 0) output += "\r\n";
     }
 
-    for (let pad = 0; pad < DOOM_PAD_ROWS; pad += 1) {
-        output += "\r\n" + fullLine;
+    for (let padRow = 0; padRow < pad.rows; padRow += 1) {
+        output += "\x1b[0m\x1b[K";
+        if (padRow < pad.rows - 1) output += "\r\n";
     }
 
     term.write(output);
