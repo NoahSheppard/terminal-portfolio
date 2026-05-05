@@ -38,6 +38,7 @@
                 { "name": "whoami", "path": "/fs/bin/whoami.js", "type": "binary" },
                 { "name": "date", "path": "/fs/bin/date.js", "type": "binary" },
                 { "name": "clear", "path": "/fs/bin/clear.js", "type": "binary" },
+                { "name": "desktop", "path": "/fs/bin/desktop.js", "type": "binary" },
                 { "name": "doom", "path": "/fs/bin/doom.js", "type": "binary" },
                 { "name": "lm", "path": "/fs/bin/lm.js", "type": "binary" }
             ]
